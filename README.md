@@ -94,6 +94,9 @@ cars_4 = self.searchFullHog(img,scale=1.4,region = (0,img.shape[1],300,550))
 cars_5 = self.searchFullHog(img,scale=1.6,region = (0,img.shape[1],350,550))
 ```
 
+The reult can be found in ```project_video_augmented.mp4```
+Unfortunately, the detection is not perfect. Espacially traffic signs are detected as cars as well.
+
 ## 5 Discussion
 A major issue is the duration of the HOG calculation, especially on the large test images and video. On my machine it took around 4s to run the whole pipeline on one image. Considering requirements like real-time capability the pipeline takes 100 times longer than it is supposed/allowed to. Additionally I imagine that these kind of calculations run on within the camera hardware itself and only objects are passed on to the next electronic control unit. 
 A second problem is the stability of the bounding box. If the bounding box does not represent the exact size of the vehicle in all frames it is hard to calculate parameters like lateral or longitudinal velocity of the detected vehicles. To prevent this Additional techiques like pca could be implemented, or a deeper calculation on found vehicles could be done.
