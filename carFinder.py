@@ -42,7 +42,7 @@ class carFinder():
         self.hist_bins = 16                         #hist_bins used by extractHist
         self.hist_range = (0,256)                   #hist_range used by extractHist
         self.spatial_size = (8,8)                   #Spatial size used by extractSapcial
-        self.hog_orient = 6                         #Orientations used by extractHog
+        self.hog_orient = 7                         #Orientations used by extractHog
         self.hog_pix_per_cell = 8                   #Pixels per cell used by extractHog
         self.hog_cell_per_block = 4                 #Cells per block used by extractHog
         self.hog_spaces = ['YCrCb']*1           #Color spaces used to define what colorspace the image shall have for extractHog
@@ -62,8 +62,8 @@ class carFinder():
         self.feature_count = 0                      #Number of features used 
         self.test_sample_count = 0                  #Number of samples tested on
         self.train_sample_count = 0                 #Number of samples trained on
-        self.car_files_path = './data/car/'     #Training data for car images
-        self.nocar_files_path = './data/nocar/' #Training data for non-car images
+        self.car_files_path = '../../data/car/'     #Training data for car images
+        self.nocar_files_path = '../../data/nocar/' #Training data for non-car images
         self.isVideo = False                        #is a Video been fed or an image
         self.previous_frame_cars = None             #Frame containing previous object detections
         
@@ -105,7 +105,7 @@ class carFinder():
                 arr[0,1].set_title(c3)
                 arr[1,1].imshow(img_cspace)
                 arr[1,1].set_title(desiredColor)
-                #plt.savefig('./color_spaces/' + desiredColor + '.jpg')
+                #plt.savefig('../../color_spaces/' + desiredColor + '.jpg')
                 plt.show()
 
         return img_cspace
@@ -179,7 +179,7 @@ class carFinder():
         arr[1,0].set_title('Hog on: ' + c2)
         arr[1,1].imshow(hi3)
         arr[1,1].set_title('Hog on: ' + c3)
-        #plt.savefig('./img/hog_images/' + color_space + '.jpg')
+        #plt.savefig('../../hog_images/' + color_space + '.jpg')
         plt.show()
 
     def extractFeatures(self, img, color_spaces = None , color_channels = None, spatial_size = None , hist_bins = None, hist_range = None, hog_orient = None, hog_pix_per_cell = None, hog_cell_per_block = None, hog_spaces = None, hog_channels = None, use_hog = None, use_hist = None, use_spatial = None):
@@ -570,7 +570,7 @@ class carFinder():
         #return bounding boxes
         return bboxes
 
-    def heatmapAndLabel(self, img, bboxes, threshold = 3):
+    def heatmapAndLabel(self, img, bboxes, threshold = 2):
 
         heatmap = np.zeros_like(img[:,:,0])
         for box in bboxes:
@@ -596,13 +596,13 @@ class carFinder():
                     if (abs(c2.centroid_x-c.centroid_x)<70.0) & (abs(c2.centroid_y-c.centroid_y)<70.0):
                         c.parentcount = c2.parentcount+1
                         c.parent = c2
-                        if c.parentcount > 10:               #Discard older parents
+                        if c.parentcount > 15:               #Discard older parents
                             c.parent.parent.parent = None
-                            c.parentcount = 10
+                            c.parentcount = 15
                         break
         carsfound = 0
         for c in frame_cars_detected:
-            if c.parentcount >= 10:
+            if c.parentcount >= 15:
                 c2 = c.parent
                 c3 = c2.parent
                 cv2.rectangle(img, (np.int(0.7*c.min_x+0.2*c2.min_x+0.1*c3.min_x),np.int(0.7*c.min_y+0.2*c2.min_y+0.1*c3.min_y)), (np.int(0.7*c.max_x+0.2*c2.max_x+0.1*c3.max_x),np.int(0.7*c.max_y+0.2*c2.max_y+0.1*c3.max_y)), (0,0,255), 6)
@@ -653,9 +653,8 @@ class carFinder():
         cars_3 = self.searchFullHog(img,scale=1.2,region = (0,img.shape[1],400,500))
         cars_4 = self.searchFullHog(img,scale=1.4,region = (0,img.shape[1],300,550))
         cars_5 = self.searchFullHog(img,scale=1.6,region = (0,img.shape[1],350,550)) 
-        cars_6 = self.searchFullHog(img,scale=1.8,region = (0,img.shape[1],400,550)) 
-        #cars_7 = self.searchFullHog(img,scale=2.0, region = (0,img.shape[1],450,600))
-        cars = cars_1+cars_2+cars_3+cars_4+cars_5#+cars_6#+cars_7                                                                #Combine found boxes
+
+        cars = cars_1+cars_2+cars_3+cars_4+cars_5                                           #Combine found boxes
         labels =self.heatmapAndLabel(img,cars)                                              #create heatmaps and label objects
         if self.isVideo:
             augmented_img = self.drawLabeledBboxesVid(img,labels)                           #Use this method to draw boxes on images if is a video
@@ -664,16 +663,22 @@ class carFinder():
             augmented_img = self.drawBoxes(augmented_img,cars)
         return augmented_img
 
+#### Main
 cF = carFinder()
 
+#Configuration
 cF.use_hog = True 
 cF.use_hist = False 
 cF.use_spatial = False
 #### Use to train new classifier ###
 #cF.createClassifier(loadclassfier=False)
 #cF.trainClassifier(maxImages=10000)
+#cF.findCarsOnVideo('../../CarND-Vehicle-Detection/project_video.mp4',saveToFile='../../project_video.mp4')
 
-cF.createClassifier()
-cF.findCarsOnVideo('./CarND-Vehicle-Detection/project_video.mp4',saveToFile='./project_video.mp4')
-#plt.imshow(cF.findCarsOnImage('./CarND-Vehicle-Detection/test_images/test1.jpg'))
+#### Use to load ready trained classifier
+#cF.createClassifier()
+## Video
+#cF.findCarsOnVideo('../../CarND-Vehicle-Detection/project_video.mp4',saveToFile='../../project_video.mp4')
+## Image
+#plt.imshow(cF.findCarsOnImage('../../CarND-Vehicle-Detection/test_images/test1.jpg'))
 #plt.show()
